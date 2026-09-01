@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>写真の例えで直感的に学ぶ Git / GitHub 入門</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-blue: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-purple: #c084fc;
+      --accent-orange: #fb923c;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border-color: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding: 24px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(192, 132, 252, 0.1));
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: var(--accent-blue);
+    }
+
+    .subtitle {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+    }
+
+    /* Comparison Table / Cards */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .concept-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .concept-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .concept-card.worktree { border-top: 4px solid var(--accent-orange); }
+    .concept-card.staging { border-top: 4px solid var(--accent-blue); }
+    .concept-card.repo { border-top: 4px solid var(--accent-green); }
+
+    .analogy-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.1);
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    /* Simulator Section */
+    .simulator-container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background-color: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background-color: #475569;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    button.btn-secondary {
+      background-color: #334155;
+    }
+
+    /* Simulation Areas Layout */
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .pipeline {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stage-box {
+      background-color: rgba(15, 23, 42, 0.6);
+      border: 1px dashed var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stage-title {
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-grow: 1;
+    }
+
+    .photo-item {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .photo-item.ready {
+      border-color: var(--accent-blue);
+    }
+
+    .photo-item.committed {
+      border-color: var(--accent-green);
+    }
+
+    .tag-diff {
+      font-size: 0.75rem;
+      color: var(--accent-green);
+    }
+
+    /* Terminal Window */
+    .terminal {
+      background-color: #050811;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      color: #38bdf8;
+      height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .prompt-text {
+      color: #94a3b8;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Git / GitHub の仕組みを図解で学ぶ</h1>
+    <p class="subtitle">「レポート_最終版_本当の最新.txt」地獄からの脱出</p>
+  </header>
+
+  <div class="concept-grid">
+    <div class="concept-card worktree">
+      <h3>📁 ワークツリー</h3>
+      <div class="analogy-badge">例え：散らかった写真フォルダ</div>
+      <p>普段ファイルを作成したりコードを弄ったりする作業スペース。残すか迷っているファイルや書きかけの変更が混ざっていてもOK。</p>
+    </div>
+
+    <div class="concept-card staging">
+      <h3>📋 ステージングエリア</h3>
+      <div class="analogy-badge">例え：アルバム（選別台）</div>
+      <p>「この変更・写真を保存するぞ！」と決めたものだけを載せる場所。コミットしたい変更だけをピンポイントで仕分けできます。</p>
+    </div>
+
+    <div class="concept-card repo">
+      <h3>🗄️ リポジトリ</h3>
+      <div class="analogy-badge">例え：記録ロッカー</div>
+      <p>確定したアルバムの履歴を正式に保管する場所。誰が・いつ・何を変更したかが完全に記録され、いつでも過去の状態に戻せます。</p>
+    </div>
+  </div>
+
+  <div class="simulator-container">
+    <div class="sim-header">
+      <h2>💡 Git ワークフロー体験</h2>
+      <div class="btn-group">
+        <button id="btnInit" onclick="execInit()">1. git init</button>
+        <button id="btnAdd" onclick="execAdd()" disabled>2. git add</button>
+        <button id="btnCommit" onclick="execCommit()" disabled>3. git commit</button>
+        <button id="btnStatus" class="btn-secondary" onclick="execStatus()" disabled>git status</button>
+        <button class="btn-secondary" onclick="resetAll()">リセット</button>
+      </div>
+    </div>
+
+    <div class="pipeline">
+      <div class="stage-box">
+        <div class="stage-title">① ワークツリー（作業中）</div>
+        <div id="worktreeList" class="item-list">
+          <div class="photo-item" id="photo1">
+            <strong>IMG001.jpg</strong>
+            <span class="tag-diff">+ 空をきれいにした</span>
+            <span class="tag-diff" style="color:#fb923c;">+ 顔を明るくした (未選択)</span>
+          </div>
+          <div class="photo-item">
+            <strong>IMG002.jpg</strong>
+            <span>観光地の写真</span>
+          </div>
+          <div class="photo-item">
+            <strong>IMG003.jpg</strong>
+            <span style="color:#94a3b8;">ピンボケ写真 (コミット不要)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-box">
+        <div class="stage-title">② ステージング（インデックス）</div>
+        <div id="stagingList" class="item-list">
+          </div>
+      </div>
+
+      <div class="stage-box">
+        <div class="stage-title">③ ローカルリポジトリ（履歴）</div>
+        <div id="repoList" class="item-list">
+          </div>
+      </div>
+    </div>
+
+    <div class="stage-title">ターミナル出力</div>
+    <div id="terminal" class="terminal"><span class="prompt-text">$ # 「git init」を押してリポジトリの初期化を開始してください</span></div>
+  </div>
+</div>
+
+<script>
+  let state = {
+    initialized: false,
+    staged: false,
+    committed: false
+  };
+
+  const term = document.getElementById('terminal');
+
+  function printLog(command, output) {
+    term.innerHTML += `\n<span class="prompt-text">$ ${command}</span>\n${output}`;
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function execInit() {
+    state.initialized = true;
+    document.getElementById('btnInit').disabled = true;
+    document.getElementById('btnAdd').disabled = false;
+    document.getElementById('btnStatus').disabled = false;
+
+    printLog('git init', 'Initialized empty Git repository in /Users/project/.git/\n(.git フォルダが作成され、Git の履歴管理がスタートしました)');
+  }
+
+  function execStatus() {
+    if (!state.initialized) return;
+
+    if (!state.staged && !state.committed) {
+      printLog('git status', 'On branch main\nNo commits yet\n\nUntracked files:\n  (use "git add <file>..." to include in what will be committed)\n\tIMG001.jpg\n\tIMG002.jpg\n\tIMG003.jpg\n\nnothing added to commit but untracked files present');
+    } else if (state.staged && !state.committed) {
+      printLog('git status', 'On branch main\nNo commits yet\n\nChanges to be committed:\n  (use "git rm --cached <file>..." to unstage)\n\tmodified:   IMG001.jpg (空をきれいにした)\n\tnew file:   IMG002.jpg');
+    } else if (state.committed) {
+      printLog('git status', 'On branch main\nnothing to commit, working tree clean\n(すべての選択した変更が安全にリポジトリへ記録されました)');
+    }
+  }
+
+  function execAdd() {
+    if (!state.initialized || state.staged) return;
+
+    state.staged = true;
+    document.getElementById('btnAdd').disabled = true;
+    document.getElementById('btnCommit').disabled = false;
+
+    // ステージングへアイテムを投影
+    const stagingArea = document.getElementById('stagingList');
+    stagingArea.innerHTML = `
+      <div class="photo-item ready">
+        <strong>IMG001.jpg</strong>
+        <span class="tag-diff">+ 空をきれいにした</span>
+      </div>
+      <div class="photo-item ready">
+        <strong>IMG002.jpg</strong>
+        <span>観光地の写真</span>
+      </div>
+    `;
+
+    printLog('git add IMG001.jpg IMG002.jpg', '(Git は成功時に何もメッセージを出さない仕様です。git status で確認してみましょう)');
+  }
+
+  function execCommit() {
+    if (!state.staged || state.committed) return;
+
+    state.committed = true;
+    document.getElementById('btnCommit').disabled = true;
+
+    // ステージングをクリアし、リポジトリにコミットを記録
+    document.getElementById('stagingList').innerHTML = '';
+    const repoArea = document.getElementById('repoList');
+    repoArea.innerHTML = `
+      <div class="photo-item committed">
+        <strong>Commit 1 (最新)</strong>
+        <span style="color:#94a3b8; font-size:0.75rem;">commit: a1b2c3d</span>
+        <span class="tag-diff">IMG001: 空をきれいにした</span>
+        <span class="tag-diff">IMG002: 追加</span>
+      </div>
+    `;
+
+    printLog('git commit -m "空の補正と観光地写真の追加"', '[main (root-commit) a1b2c3d] 空の補正と観光地写真の追加\n 2 files changed, 2 insertions(+)\n create mode 100644 IMG002.jpg');
+  }
+
+  function resetAll() {
+    state = { initialized: false, staged: false, committed: false };
+    document.getElementById('btnInit').disabled = false;
+    document.getElementById('btnAdd').disabled = true;
+    document.getElementById('btnCommit').disabled = true;
+    document.getElementById('btnStatus').disabled = true;
+    document.getElementById('stagingList').innerHTML = '';
+    document.getElementById('repoList').innerHTML = '';
+    term.innerHTML = '<span class="prompt-text">$ # リセットしました。「git init」から再開できます</span>';
+  }
+</script>
+
+</body>
+</html>
